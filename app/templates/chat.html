@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat | los sueños de nona</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+</head>
+<body>
+    <header>
+        <div class="topbar">
+            <div class="languages">
+                <img src="https://flagcdn.com/16x12/es.png" title="Español" alt="es" class="active">
+                <img src="https://flagcdn.com/16x12/gb.png" title="English" alt="en">
+                <img src="https://flagcdn.com/16x12/fr.png" title="Français" alt="fr">
+                <img src="https://flagcdn.com/16x12/it.png" title="Italiano" alt="it">
+            </div>
+        </div>
+        <div class="logo">los sueños de nona.</div>
+        <nav class="navbar">
+            <a href="#" class="active">INICIO</a>
+            <a href="#">SOBRE MÍ</a>
+            <a href="#">PORTFOLIO</a>
+            <a href="#">SERVICIOS</a>
+            <a href="#">CONTACTO</a>
+            <a href="#">BLOG</a>
+        </nav>
+    </header>
+    <div class="chat-resumen-container">
+        <div id="chatbox">
+            <h2 style="text-align:center; color:#b9a497; font-weight:700; letter-spacing:0.05em; margin-bottom:1em;">Chat con el Agente</h2>
+            <div id="messages"></div>
+            <form id="inputform" autocomplete="off">
+                <input type="text" id="usermsg" autocomplete="off" placeholder="Escribe tu mensaje..." required>
+                <button type="submit">Enviar</button>
+            </form>
+        </div>
+        <aside id="resumen-box">
+            <div class="resumen-titulo">📝 Resumen</div>
+            <ul class="resumen-lista">
+                <li><span class="resumen-label">Servicio:</span> <span id="resumen-servicio">—</span></li>
+                <li><span class="resumen-label">Lugar:</span> <span id="resumen-lugar">—</span></li>
+                <li><span class="resumen-label">Precio:</span> <span id="resumen-precio">—</span></li>
+                <li><span class="resumen-label">Día:</span> <span id="resumen-dia">—</span></li>
+            </ul>
+        </aside>
+    </div>
+    <style>
+        .chat-resumen-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* Centra verticalmente los centroides */
+    justify-content: center;
+    gap: 48px;
+    margin-top: 4em; /* Más abajo en la página */
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#resumen-box {
+    align-self: center; /* Centra verticalmente el resumen respecto al chat */
+}
+#chatbox {
+    max-width: 500px;
+    width: 100%;
+    background: #fff;
+    padding: 2em 2em 1em 2em;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px #e7bfae44;
+}
+        #resumen-box {
+            position: static;
+            width: 230px;
+            background: #fff;
+            border: 2.5px solid #b9a497;
+            border-radius: 16px;
+            box-shadow: 0 4px 18px #e7bfae33;
+            padding: 22px 18px 18px 18px;
+            z-index: 20;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+        .resumen-titulo {
+            text-align: center;
+            font-weight: 700;
+            color: #b9a497;
+            font-size: 1.18em;
+            margin-bottom: 16px;
+            letter-spacing: 0.03em;
+        }
+        .resumen-lista {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .resumen-lista li {
+            margin-bottom: 13px;
+            font-size: 1.06em;
+            color: #6d5c4a;
+            display: flex;
+            gap: 0.5em;
+        }
+        .resumen-label {
+            font-weight: 600;
+            color: #b9a497;
+            min-width: 68px;
+            display: inline-block;
+        }
+        @media (max-width: 900px) {
+            .chat-resumen-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+            }
+            #chatbox {
+                max-width: 95vw;
+                margin: 0 auto;
+            }
+            #resumen-box {
+                margin: 1.5em auto 0 auto;
+                width: 95%;
+            }
+        }
+    </style>
+    <script>
+        const form = document.getElementById('inputform');
+        const input = document.getElementById('usermsg');
+        const messages = document.getElementById('messages');
+
+        // --- Lógica de resumen mejorada ---
+        const resumenServicio = document.getElementById('resumen-servicio');
+        const resumenLugar = document.getElementById('resumen-lugar');
+        const resumenPrecio = document.getElementById('resumen-precio');
+        const resumenDia = document.getElementById('resumen-dia');
+
+        // Regex mejorados para captar frases naturales
+        const patrones = {
+            servicio: /(servicio|contratar|quiero|busco)\s*(de)?\s*:?\s*([\wáéíóúüñ ]+)/i,
+            lugar: /(lugar|sitio|en|será en|seria en)\s*:?\s*([\wáéíóúüñ,\.\- ]+)/i,
+            precio: /(precio|coste|cuesta|vale|presupuesto)\s*:?\s*([\d.,€ ]+)/i,
+            dia: /(d[ií]a|fecha|cuando|para el|para la|para el d[ií]a|será el|seria el|el d[ií]a|la fecha es|cuando es|cuando será)\s*:?-?\s*([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4}|[0-9]{1,2}\s*de\s*[a-zA-Záéíóú]+\s*de?\s*[0-9]{2,4}|[a-zA-Záéíóú]+,?\s*[0-9]{1,2})/i
+        };
+
+        // Extrae el último valor de cada campo de todos los mensajes del usuario
+        function extraerResumenConversacion() {
+            let resumen = { servicio: '', lugar: '', precio: '', dia: '' };
+            chatHistory.forEach(msg => {
+                if (msg.who !== 'user') return;
+                Object.entries(patrones).forEach(([campo, regex]) => {
+                    const match = msg.text.match(regex);
+                    if (match && match[3]) resumen[campo] = match[3].trim();
+                    if (campo === 'lugar' && match && match[2]) resumen[campo] = match[2].trim();
+                    if (campo === 'precio' && match && match[2]) resumen[campo] = match[2].trim();
+                    if (campo === 'dia' && match && match[2]) resumen[campo] = match[2].trim();
+                });
+            });
+            resumenServicio.textContent = resumen.servicio || '—';
+            resumenLugar.textContent = resumen.lugar || '—';
+            resumenPrecio.textContent = resumen.precio || '—';
+            resumenDia.textContent = resumen.dia || '—';
+        }
+
+        function addMsg(text, who) {
+            chatHistory.push({text, who});
+            const div = document.createElement('div');
+            div.className = 'msg ' + who;
+            div.innerText = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+            if (who === 'user') extraerResumenConversacion();
+        }
+
+        // Idioma seleccionado (por defecto español)
+        let currentLang = 'es';
+        let prevLang = 'es';
+        const langWelcome = {
+            es: '¡Hola! Soy el asistente de eventos. ¿En qué puedo ayudarte?',
+            en: 'Hi! I am your event assistant. How can I help you?',
+            fr: 'Bonjour ! Je suis l’assistant(e) d’événements. Comment puis-je vous aider ?',
+            it: 'Ciao! Sono l’assistente per eventi. Come posso aiutarti?'
+        };
+        const typingMsgs = {
+            es: 'La wedding planner está escribiendo...',
+            en: 'The wedding planner is typing...',
+            fr: 'La wedding planner est en train d’écrire...',
+            it: 'La wedding planner sta scrivendo...'
+        };
+        // Historial de mensajes (user y bot)
+        let chatHistory = [];
+        // Bandera: cambio de idioma
+        document.querySelectorAll('.languages img').forEach(img => {
+            img.addEventListener('click', async function() {
+                if (this.classList.contains('active')) return;
+                document.querySelectorAll('.languages img').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                prevLang = currentLang;
+                currentLang = this.getAttribute('alt');
+                // Traduce el historial
+                if (chatHistory.length === 0) {
+                    messages.innerHTML = '';
+                    addMsg(langWelcome[currentLang], 'bot');
+                    return;
+                }
+                // Muestra mensaje temporal
+                messages.innerHTML = '';
+                addMsg({es:'Traduciendo historial...',en:'Translating chat...',fr:'Traduction du chat...',it:'Sto traducendo la chat...'}[currentLang], 'bot');
+                try {
+                    const res = await fetch('/translate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({messages: chatHistory, source_lang: prevLang, target_lang: currentLang})
+                    });
+                    const data = await res.json();
+                    chatHistory = data.messages;
+                    messages.innerHTML = '';
+                    chatHistory.forEach(msg => addMsg(msg.text, msg.who));
+                } catch (e) {
+                    messages.innerHTML = '';
+                    addMsg(langWelcome[currentLang], 'bot');
+                }
+            });
+        });
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const msg = input.value;
+            addMsg(msg, 'user');
+            input.value = '';
+            // Muestra mensaje temporal de "escribiendo..."
+            const typingMsg = typingMsgs[currentLang] || typingMsgs['es'];
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'msg bot typing-animation';
+            typingDiv.innerHTML = `<span class="typing-text">${typingMsg.replace('...', '')}</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`;
+            messages.appendChild(typingDiv);
+            messages.scrollTop = messages.scrollHeight;
+
+            // Llama al backend
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, lang: currentLang, history: chatHistory})
+            });
+            const data = await res.json();
+
+            // Espera aleatoria entre 1 y 5 minutos
+            const delayMs = Math.floor(Math.random() * (5 - 1 + 1) + 1) * 1000; // entre 1 y 5 seg (ajusta a 60*1000 para min)
+            setTimeout(() => {
+                typingDiv.remove();
+                addMsg(data.response, 'bot');
+            }, delayMs);
+        };
+        // Mensaje de bienvenida solo si historial vacío
+        if (chatHistory.length === 0) addMsg(langWelcome[currentLang], 'bot');
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Ignorar directorios y archivos de Python
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Ignorar entornos virtuales
+venv/
+env/
+.venv/
+.direnv/
+
+# Ignorar archivos de editor
+*.swp
+*.bak
+*~
+.vscode/
+.idea/
+
+# Ignorar archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de Jupyter Notebook (si los usas)
+.ipynb_checkpoints/
+
+# Ignorar archivos de registro
+*.log
+
+# Ignorar archivos de configuración sensibles (ej. APIs, contraseñas)
+*.env
+.env
+config.ini

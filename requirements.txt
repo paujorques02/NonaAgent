@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+langgraph
+python-dotenv
+twilio
+jinja2
+sqlite-utils
+google-generativeai

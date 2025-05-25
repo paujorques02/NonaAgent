@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reservas</title>
+    <style>
+        body { font-family: Arial; margin: 2em; }
+        table { border-collapse: collapse; width: 80%; margin: auto; }
+        th, td { border: 1px solid #ccc; padding: 0.7em; text-align: left; }
+        th { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h2>Reservas registradas</h2>
+    <table>
+        <tr><th>Fecha</th><th>Tipo de evento</th><th>Nombre</th><th>Email</th></tr>
+        {% for fecha, tipo_evento, nombre, email in reservas %}
+        <tr>
+            <td>{{ fecha }}</td>
+            <td>{{ tipo_evento }}</td>
+            <td>{{ nombre }}</td>
+            <td>{{ email }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <a href="/servicios">Ver servicios</a>
+</body>
+</html>

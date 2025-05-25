@@ -1,0 +1,23 @@
+.resumen-box {
+  border: 3px solid #222;
+  border-radius: 10px;
+  padding: 20px 28px;
+  background: #fff;
+  margin: 40px 0 0 40px;
+  min-width: 220px;
+  min-height: 180px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  font-size: 1.1rem;
+}
+.resumen-box h4 {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+.resumen-item {
+  margin-bottom: 8px;
+  color: #444;
+}
+.resumen-item b {
+  color: #222;
+}
