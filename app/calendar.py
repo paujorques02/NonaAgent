@@ -29,7 +29,24 @@ def init_db():
             ("Wedding planner", "Organización completa de bodas.", 2000),
             ("Decoración de bautizos", "Decoración temática para bautizos.", 800),
             ("Decoración de comuniones", "Decoración especial para comuniones.", 900),
-            ("Decoración de cumpleaños", "Decoración personalizada para cumpleaños.", 600)
+            ("Decoración de cumpleaños", "Decoración personalizada para cumpleaños.", 600),
+            ("Coordinación de día B", "Servicio de coordinación el día del evento para que todo salga perfecto.", 800),
+            ("Asesoría inicial", "Sesión de consultoría para parejas que empiezan a planificar su boda.", 250),
+            ("Búsqueda de proveedores", "Selección y gestión de proveedores según las necesidades del cliente.", 500),
+            ("Gestión de presupuesto", "Creación y seguimiento de un presupuesto detallado para el evento.", 350),
+            ("Diseño floral personalizado", "Creación de arreglos florales únicos para cualquier evento.", 400),
+            ("Alquiler de mobiliario y menaje", "Opciones de mobiliario y menaje para complementar la decoración.", 700),
+            ("Iluminación ambiental", "Diseño e instalación de sistemas de iluminación para crear atmósferas especiales.", 550),
+            ("Candy bar y mesas dulces", "Diseño y montaje de mesas de dulces temáticas.", 450),
+            ("Decoración para eventos corporativos", "Servicios de decoración adaptados a eventos de empresa.", 1500),
+            ("Maestro de ceremonias", "Servicio de MC profesional para bodas civiles o eventos especiales.", 600),
+            ("Detalles y recordatorios para invitados", "Selección y personalización de pequeños obsequios para los asistentes.", 300),
+            ("Música y entretenimiento", "Asesoramiento y contratación de DJ's, bandas o artistas para el evento.", 750),
+            ("Servicio de fotografía y video", "Coordinación con fotógrafos y videógrafos para capturar los momentos especiales.", 1000),
+            ("Diseño de invitaciones y papelería", "Creación de invitaciones y otros elementos gráficos personalizados.", 300),
+            ("Decoración express", "Paquete de decoración básico para eventos pequeños o con presupuesto ajustado.", 300),
+            ("Asesoría temática", "Sesión de asesoramiento enfocada en la elección de una temática para el evento.", 150),
+            ("Decoración para photocall", "Diseño y montaje de un espacio temático para fotografías.", 200)
         ]
         c.executemany('INSERT INTO servicios (nombre, descripcion, precio) VALUES (?,?,?)', servicios)
     conn.commit()
@@ -77,4 +94,9 @@ def get_availability(fecha):
     else:
         return f"Ya hay {count} evento(s) ese día. Consulta disponibilidad específica."
 
-init_db()
+try:
+    init_db()
+except Exception as e:
+    import traceback
+    print("[ERROR] Fallo al inicializar la base de datos:", e)
+    print(traceback.format_exc())

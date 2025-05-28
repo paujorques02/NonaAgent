@@ -4,26 +4,103 @@
     <meta charset="UTF-8">
     <title>Reservas</title>
     <style>
-        body { font-family: Arial; margin: 2em; }
-        table { border-collapse: collapse; width: 80%; margin: auto; }
-        th, td { border: 1px solid #ccc; padding: 0.7em; text-align: left; }
-        th { background: #f0f0f0; }
+        body { background: #faf7f3; font-family: 'Montserrat', Arial, sans-serif; margin: 0; }
+        header { background: #fff; border-bottom: 1px solid #ececec; padding: 0.7em 0 0.7em 0; position: sticky; top: 0; z-index: 10; }
+        header div { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        header div div { font-size: 2em; font-weight: 700; color: #b9a497; letter-spacing: 0.07em; }
+        header a { color: #b9a497; text-decoration: none; font-weight: 700; font-size: 1.1em; }
+        main { max-width: 1100px; margin: 2em auto 0 auto; padding: 0 1em; }
+        section { margin-bottom: 2.5em; }
+        h2 { color: #b9a497; text-align: center; margin-bottom: 0.5em; }
+        #calendar { background: #fff; border: 2px solid #e7bfae; border-radius: 16px; box-shadow: 0 4px 18px #e7bfae33; padding: 1.5em 1em; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #e7bfae44; overflow: hidden; }
+        th { background: #f6f4f1; color: #b9a497; font-weight: 700; padding: 0.7em; }
+        td { padding: 0.7em; }
     </style>
 </head>
 <body>
-    <h2>Reservas registradas</h2>
-    <table>
-        <tr><th>Fecha</th><th>Tipo de evento</th><th>Nombre</th><th>Email</th></tr>
-        {% for fecha, tipo_evento, nombre, email in reservas %}
-        <tr>
-            <td>{{ fecha }}</td>
-            <td>{{ tipo_evento }}</td>
-            <td>{{ nombre }}</td>
-            <td>{{ email }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <br>
+    <header>
+        <div>
+            <div>Reservas</div>
+            <a href="/chat-ui">Volver al chat</a>
+        </div>
+    </header>
+    <main>
+        <section>
+            <h2>Calendario de eventos confirmados</h2>
+            <div id="calendar"></div>
+        </section>
+        <section>
+            <h2>Reservas propuestas</h2>
+            <table>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Lugar</th>
+                    <th>Precio</th>
+                    <th>Día</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+                {% for p in propuestas %}
+                <tr>
+                    <td>{{ p.servicio }}</td>
+                    <td>{{ p.lugar }}</td>
+                    <td>{{ p.precio }}</td>
+                    <td>{{ p.dia }}</td>
+                    <td>{{ p.estado if p.estado else 'pendiente' }}</td>
+                    <td>
+                        {% if not p.estado or p.estado == 'pendiente' %}
+                        <form method="post" action="/reservas/accion" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ loop.index0 }}">
+                            <input type="hidden" name="accion" value="confirmada">
+                            <button type="submit" style="background:#5cb85c;color:#fff;padding:0.4em 1.1em;border:none;border-radius:7px;font-weight:bold;cursor:pointer;">Aceptar</button>
+                        </form>
+                        <form method="post" action="/reservas/accion" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ loop.index0 }}">
+                            <input type="hidden" name="accion" value="rechazada">
+                            <button type="submit" style="background:#d9534f;color:#fff;padding:0.4em 1.1em;border:none;border-radius:7px;font-weight:bold;cursor:pointer;">Rechazar</button>
+                        </form>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+    </main>
+    <!-- FullCalendar.io CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script>
+        const eventosConfirmados = JSON.parse(`{{ eventos_confirmados | tojson | safe }}`);
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                height: 500,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                events: eventosConfirmados,
+                eventColor: '#e7bfae',
+                eventTextColor: '#3d3d3d',
+                eventDisplay: 'block',
+                eventClick: function(info) {
+                    alert(
+                        'Evento: ' + info.event.extendedProps.nombre + '\n' +
+                        'Lugar: ' + info.event.extendedProps.lugar + '\n' +
+                        'Precio: ' + info.event.extendedProps.precio + '\n' +
+                        'Fecha: ' + info.event.start.toLocaleDateString()
+                    );
+                }
+            });
+            calendar.render();
+        });
+    </script>
     <a href="/servicios">Ver servicios</a>
 </body>
 </html>

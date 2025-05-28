@@ -13,13 +13,18 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "t
 
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
+# Redirige la raíz a /chat-ui
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/chat-ui")
+
 @app.post("/chat")
 async def chat(user_input: dict):
     user_message = user_input.get("message", "")
     lang = user_input.get("lang", "es")
     history = user_input.get("history", None)
-    response = chat_with_agent(user_message, lang, history)
-    return {"response": response}
+    data = chat_with_agent(user_message, lang, history)
+    return data
 
 @app.post("/translate")
 async def translate(payload: dict):
@@ -61,19 +66,56 @@ async def servicios_page(request: Request):
     servicios = get_services()
     return templates.TemplateResponse("servicios.html", {"request": request, "servicios": servicios})
 
-# Interfaz web: calendario/reservas (simple)
+# Interfaz web: reservas propuestas desde el chat
+from fastapi import Request, Form
+from fastapi.responses import RedirectResponse
+
 @app.get("/reservas", response_class=HTMLResponse)
 async def reservas_page(request: Request):
-    # Para demo: muestra reservas simples
-    import sqlite3
-    conn = sqlite3.connect(settings.DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT fecha, tipo_evento, nombre, email FROM calendario ORDER BY fecha DESC')
-    reservas = c.fetchall()
-    conn.close()
-    return templates.TemplateResponse("reservas.html", {"request": request, "reservas": reservas})
+    # Muestra las propuestas pendientes y su estado
+    eventos_confirmados = [
+        {
+            "title": f"{r['servicio']} - {r['lugar']}",
+            "start": r["dia"],
+            "extendedProps": {
+                "nombre": r["servicio"],
+                "lugar": r["lugar"],
+                "precio": r["precio"]
+            }
+        }
+        for r in temp_reservas if r.get("estado") == "confirmada"
+    ]
+    return templates.TemplateResponse(
+        "reservas.html",
+        {"request": request, "propuestas": temp_reservas, "eventos_confirmados": eventos_confirmados}
+    )
+
+@app.post("/reservas/accion")
+async def reservas_accion(idx: int = Form(...), accion: str = Form(...)):
+    # Cambia estado de la propuesta
+    if 0 <= idx < len(temp_reservas):
+        temp_reservas[idx]["estado"] = accion
+    return RedirectResponse("/reservas", status_code=303)
+
 
 # Interfaz web: chat con el agente
 @app.get("/chat-ui", response_class=HTMLResponse)
 async def chat_ui(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request})
+
+# --- API para reservas desde el chat ---
+from fastapi import Body
+from fastapi.responses import JSONResponse
+
+# Variable temporal para demo
+temp_reservas = []
+
+@app.post("/api/reserva")
+async def api_reserva(data: dict = Body(...)):
+    # Guardar en memoria (puedes cambiar por DB)
+    temp_reservas.append(data)
+    print("[Reserva recibida]", data)
+    return {"ok": True}
+
+
+
